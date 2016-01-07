@@ -4,6 +4,10 @@
 
 var zlib = require('zlib');
 
+// logger
+var logger = require('pomelo-logger').getLogger('socket', __filename);
+var utils = require('./utils');
+
 module.exports = function() {
   return new Filter();
 };
@@ -18,7 +22,7 @@ Filter.prototype.before = function(msg, session, next){
     next();
     return;
   }
-  console.log('[zlibFilter DEBUG] received msg: ', msg)
+  logger.debug('received msg: %s', utils.toSimpleJson(msg));
   var compress = msg.compress;
   if(!Buffer.isBuffer(msg.body)){
     msg.body = new Buffer(msg.body);
@@ -28,16 +32,16 @@ Filter.prototype.before = function(msg, session, next){
       delete msg['compress'];
       delete msg['body'];
       if(!!err){
-        console.log('[zlibFilter ERROR] zlib inflate failed: ', err)
+        logger.error('zlib inflate failed: %s', err);
         next(err);
       }else{
-        console.log('[zlibFilter DEBUG] zlib inflated: ', parseJSON(buffer))
+        logger.debug('zlib inflated: %s', buffer)
         extendObject(msg,parseJSON(buffer));
         next();
       }
     });
   }else {//NO compress,
-    console.log('[zlibFilter DEBUG] no compress')
+    logger.debug('no compress')
     extendObject(msg,parseJSON(msg.body));
     delete msg['compress'];
     delete msg['body'];

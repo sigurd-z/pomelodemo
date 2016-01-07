@@ -1,12 +1,15 @@
 var pomelo = require('pomelo');
 var libConnector= require('./lib/connector.js');
 var libZlibFilter = require('./lib/zlibfilter.js');
+var pomeloLogger = require('pomelo-logger');
 
 /**
  * Init app for client.
  */
 var app = pomelo.createApp();
 app.set('name', 'pomelodemo');
+
+app.configureLogger(pomeloLogger);
 
 var afterStart = function(){};
 
@@ -48,3 +51,12 @@ app.start(afterStart);
 process.on('uncaughtException', function (err) {
   console.log('[Exception]: ', err.stack)
 });
+
+// test logger
+var logger = pomeloLogger.getLogger('website', __filename);
+logger.debug('This\'s debug log');
+logger.info('This\'s info log');
+logger.warn('This\'s warn log');
+logger.error('This\'s error log');
+logger.trace('This\'s trace log');
+logger.fatal('This\'s fatal log');

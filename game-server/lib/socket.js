@@ -9,11 +9,14 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var Package = require('./protocol.js').Package;
 
+// logger
+var logger = require('pomelo-logger').getLogger('socket', __filename);
+
 var handlers = {};
 
 handlers[Package.TYPE_HEARTBEAT] = function(libSocket, pkg) {
   //TODO -- Heartbeat logic
-  console.log('[LibSocket]', 'Heartbeat from ' + libSocket.remoteAddress.ip + ':' + libSocket.remoteAddress.port);
+  logger.debug('Heartbeat from %s:%s', libSocket.remoteAddress.ip, libSocket.remoteAddress.port);
 };
 
 handlers[Package.TYPE_DATA] = function(libSocket, pkg) {
@@ -89,9 +92,9 @@ Socket.prototype.sendRaw = function(msg) {
  * @param {Object} msg    data from connector.encode {id:xx, body:buffer}
  */
 Socket.prototype.send = function(msg) {
-  console.log('[LibSocket]', 'send begin');
+  logger.debug('send begin');
   if(this.state === ST_CLOSED || !msg) {
-    console.log('[LibSocket]', 'socket was closed OR data to send is NULL,send abort','error');
+    logger.error('socket was closed OR data to send is NULL,send abort');
     return;
   }
   if(!Buffer.isBuffer(msg.body)){//Buffer check
@@ -102,7 +105,7 @@ Socket.prototype.send = function(msg) {
       if(!!str){
         msg.body = new Buffer(str);
       }else{//msg is not object
-        console.log('[LibSocket]', 'Unknown message format(should be {id:number,body:buffer})','error');
+        logger.error('Unknown message format(should be {id:number,body:buffer})');
         return;
       }
     }
@@ -115,7 +118,7 @@ Socket.prototype.send = function(msg) {
     this._WAITING_RESPONSE = false;
     this.nextMessage();
   }
-  console.log('[LibSocket]', 'send end');
+  logger.debug('send end');
 };
 
 /**
@@ -128,7 +131,7 @@ Socket.prototype.handlePackage = function(pkg) {
     if(!!handler) {
       handler(this, pkg);
     }	else {
-      console.log('[LibSocket]', 'Unknown package type ' + pkg.type + '.', 'error');
+      logger.error('Unknown package type %s.', pkg.type);
       this.disconnect();
     }
   }
@@ -139,7 +142,7 @@ Socket.prototype.handlePackage = function(pkg) {
  */
 Socket.prototype.nextMessage = function() {
   if( !this._WAITING_RESPONSE && this.useMsgQueue && this.messageQueue.length>0){
-    console.log('[LibSocket]', 'trigger next message');
+    logger.debug('trigger next message');
     this.handlePackage(Package.decode(this.messageQueue.shift()));
   }
 };
@@ -148,7 +151,7 @@ Socket.prototype.nextMessage = function() {
  * Disconnect client socket, for Pomelo connector protocol
  */
 Socket.prototype.disconnect = function() {
-  console.log('[LibSocket]', 'disconnect');
+  logger.debug('disconnect');
   if(this.state === ST_CLOSED) {
     return;
   }
@@ -179,13 +182,13 @@ Socket.prototype.sendBatch = function(msgs) {
 };
 
 var onData = function(libSocket, chunk) {
-  console.log('[LibSocket]', 'on data');
+  logger.debug('on data');
   if(libSocket.state === ST_CLOSED) {
-    console.log('[LibSocket]', 'socket had been closed');
+    logger.debug('socket had been closed');
     return true;
   }
   if(typeof chunk !== 'string' && !Buffer.isBuffer(chunk)) {//format error, close socket
-    console.log('[LibSocket]', 'invalid data' + libSocket.remoteAddress.ip + ', close socket!', 'error');
+    logger.error('invalid data %s, close socket!', libSocket.remoteAddress.ip);
     libSocket.socket.end();
     return true;
   }
@@ -193,7 +196,7 @@ var onData = function(libSocket, chunk) {
     chunk = new Buffer(chunk);
   }
   if(libSocket.state === ST_HEAD && libSocket.packageBuffer === null && !acceptableTypeData(chunk[0])){//data type unknown, close socket
-    console.log('[LibSocket]', 'invalid data format from ' + libSocket.remoteAddress.ip + ', close socket!', 'error');
+    logger.error('invalid data format from %s close socket!', libSocket.remoteAddress.ip);
     libSocket.disconnect();
     return true;
   }
@@ -205,7 +208,7 @@ var onData = function(libSocket, chunk) {
     if(libSocket.state === ST_HEAD) {
       offset = readHead(libSocket, chunk, offset);
       if(offset < 0){//bad package
-        console.log('[LibSocket]', 'invalid body from ' + libSocket.remoteAddress.ip + ', close socket!', 'error');
+        logger.error('invalid body from %s, close socket!', libSocket.remoteAddress.ip);
         libSocket.disconnect();
         break;
       }
@@ -222,11 +225,11 @@ var onDrain = function(libSocket){
 //When socket.write returns false, this mean system stream is full
 //So check drain event
 //And drain will be fired when stream is empty
-  console.log('[LibSocket]', 'on drain(empty output stream)');
+  logger.debug('on drain(empty output stream)');
 };
 
 var onEnd = function(libSocket, chunk) {
-  console.log('[LibSocket]', 'on end');
+  logger.debug('on end');
   if(chunk) {
     libSocket.sendRaw(Package.encode(chunk));
   }
@@ -239,7 +242,7 @@ var onEnd = function(libSocket, chunk) {
 
 var onTimeout = function(libSocket) {
   if(!libSocket.useLongConnection){
-    console.log('[LibSocket]', 'on close timeout' + libSocket.closeTimeout + '. close socket.');
+    logger.debug('on close timeout %s. close socket.', libSocket.closeTimeout);
     reset(libSocket);
     libSocket.socket.end();
     destroy(libSocket);
@@ -247,14 +250,14 @@ var onTimeout = function(libSocket) {
 };
 
 var onError = function(libSocket, err){
-  console.log('[LibSocket]', 'on error');
+  logger.debug('on error');
   reset(libSocket);
   libSocket.emit('error', err);
   destroy(libSocket);
 };
 
 var onClose = function(libSocket){
-  console.log('[LibSocket]', 'on close');
+  logger.debug('on close');
   reset(libSocket);
   libSocket.emit('disconnect');//emit distinct when user close socket
   libSocket.emit('close');

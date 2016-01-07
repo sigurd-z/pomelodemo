@@ -93,6 +93,26 @@
         }
       ,"backups": 5,
       "category":"pomelo-rpc"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/website-${opts:serverId}.log",
+      "maxLogSize": 1048576,
+      "layout": {
+          "type": "basic"
+        }
+      ,"backups": 1,
+      "category":"website"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/socket.log",
+      "maxLogSize": 1048576,
+      "layout": {
+          "type": "basic"
+        }
+      ,"backups": 1,
+      "category":"socket"
     }
   ],
 
@@ -102,6 +122,6 @@
   },
 
   "replaceConsole": true,
-
-  "lineDebug": false
+  "lineDebug": true,
+  "rawMessage": false
 }

@@ -8,6 +8,9 @@ var libSocket = require('./socket.js');
 var libCoder = require('./coder.js');
 var libDictionary = require('./dictionary.js');
 
+// logger
+var logger = require('pomelo-logger').getLogger('socket', __filename);
+
 var DEFAULT_ROUTE_PATH = 'default.defaultHandler.defaultRoute';
 var DEFAULT_ERR_ROUTE = 'default.defaultHandler.defaultError';
 
@@ -71,24 +74,24 @@ Connector.prototype.start = function(cb) {
       libsocket.socket.setTimeout(self.closeTimeout);
     }
     libsocket.on('closing', function(reason) {
-      console.log('[libConnector]', 'on socket', libsocket.id, 'closing, reason:', reason);
+      logger.debug('on socket %s closing, reason:%s err', libsocket.id, reason);
     });
     self.emit('connection', libsocket);//all connector must emit this event to pomelo
   });
 
   this.tcpServer.on("error", function(err){
     if (err.code == 'EADDRINUSE') {//err: {code:'', errno:'', syscall:''}
-      console.log('[libConnector]', 'Address in use, retrying...');
+      logger.debug('Address in use, retrying...');
       setTimeout(function () {
         self.tcpServer.close();
         self.tcpServer.listen(self.port, self.host);
       }, 1000);
     }
-    console.log('[libConnector]', 'Server Error: [', err.code, ']', err.message, 'error');
+    logger.error('Server Error: [%s] %s', err.code, err.message);
   });
 
   this.tcpServer.on("close", function(){
-    console.log('[libConnector]', 'libConnector on socket close');
+    logger.debug('libConnector on socket close');
   });
 
   process.nextTick(cb);
@@ -105,20 +108,20 @@ Connector.encode = Connector.prototype.encode = function(reqId, route, msg){//ms
   if(!!reqId) {//RESPONSE
   } else {//PUSH
     if(!route || !msg){
-      console.log('[libConnector]', 'route or message is need for server push', 'error');
+      logger.error('route or message is need for server push');
       return null;
     }
     var dict = this.dictionary.getDict();//format as {'serverType.Handler.action': index,...} index starts from 1
     if(dict && !!dict[route]) {
       routeId = dict[route];
     }else{
-      console.log('[libConnector]', 'EncodeError. routeId', route, 'not found', 'error');
+      logger.error('EncodeError. routeId %s not found', route);
       return null;
     }
   }
   msg = libCoder.encode(this.aesKey, reqId, routeId, msg);
   if(!msg){
-    console.log('[libConnector]', 'encode failed', 'error');
+    logger.error('encode failed');
     return null;
   }
   return msg;
@@ -130,7 +133,7 @@ Connector.decode = Connector.prototype.decode = function(msg){//msg:{type:xx, bo
   }
   msg = libCoder.decode(this.aesKey, msg.body);
   if(!msg){
-    console.log('[libConnector]', 'decode failed', 'error');
+    logger.error('decode failed');
     return null;
   }
   var routeId = msg.route;//number
@@ -147,7 +150,7 @@ Connector.decode = Connector.prototype.decode = function(msg){//msg:{type:xx, bo
 //MAP routeId to routeString
   var abbrs = this.dictionary.getAbbrs();//format as {index:'serverType.Handler.action',...} index starts from 1
   if(!abbrs || (!!abbrs && !abbrs[routeId])) {
-    console.log('[libConnector]', 'DecodeError. routeId', routeId, 'not found, use defaultError handler', 'error');
+    logger.error('DecodeError. routeId %s not found, use defaultError handler', routeId);
     msg.route = this.defaultErrRoute;
     msg.compress = 0;
     msg.body = null;
