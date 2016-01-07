@@ -1,0 +1,11 @@
+mocha test scripts
+
+0. INSTALL
+npm install mocha -g
+
+1. TEST
+1.1 single test
+    mocha file.js
+1.2 test all
+    cd .. //parent of test folder
+    mocha
