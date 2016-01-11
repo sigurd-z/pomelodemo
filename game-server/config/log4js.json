@@ -113,6 +113,26 @@
         }
       ,"backups": 1,
       "category":"socket"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/access.log",
+      "maxLogSize": 1048576,
+      "layout": {
+          "type": "basic"
+        }
+      ,"backups": 1,
+      "category":"access"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/slowlog.log",
+      "maxLogSize": 1048576,
+      "layout": {
+          "type": "basic"
+        }
+      ,"backups": 1,
+      "category":"slowlog"
     }
   ],
 

@@ -1,14 +1,21 @@
 var pomelo = require('pomelo');
+
+// 自定义 socket (aes加密, zlib压缩)
 var libConnector= require('./lib/connector.js');
 var libZlibFilter = require('./lib/zlibfilter.js');
+var utils = require('./app/util/utils.js');
+
+// 日志扩展
 var pomeloLogger = require('pomelo-logger');
 
+var accessLogFilter = require('./app/filter/accessLogFilter.js');
 /**
  * Init app for client.
  */
 var app = pomelo.createApp();
 app.set('name', 'pomelodemo');
 
+// 用log4js.json 配置log
 app.configureLogger(pomeloLogger);
 
 var afterStart = function(){};
@@ -17,14 +24,20 @@ var afterStart = function(){};
 app.set('DEBUG', false);
 app.set('STATIC_ROUTE', true);
 
+// debug in development
 app.configure('development', function(){
   app.set('DEBUG', true);
 });
 
 // app configuration
 app.configure('production|development',function(){
+  // 打开系统监控
   app.enable('systemMonitor');
+
+  // socket 数据解压
   app.filter(libZlibFilter());
+  app.filter(accessLogFilter({slowTime:1000}));//record access log and execute time
+
 });
 
 // route gate configuration
@@ -47,13 +60,13 @@ app.configure('production|development', 'gate', function(){
 // start app
 app.start(afterStart);
 
-// catch exceptions & no crash
+var logger = pomeloLogger.getLogger('website', __filename);
+// catch exceptions
 process.on('uncaughtException', function (err) {
-  console.log('[Exception]: ', err.stack)
+  logger.error('catch err: %s', err.stack);
 });
 
 // test logger
-var logger = pomeloLogger.getLogger('website', __filename);
 logger.debug('This\'s debug log');
 logger.info('This\'s info log');
 logger.warn('This\'s warn log');
