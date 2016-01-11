@@ -9,7 +9,7 @@ var reqId = 1;
 var routeId = 0;//listRoute
 var aesKey = 'HuJb4NqADyiGcHTfzhQXv9HKrfDqJcXu';
 
-var msg = {compress:false, body:JSON.stringify({uuid:'agoo',account:1,osType:0})};
+var msg = {compress:false, body:JSON.stringify({uuid:'agoo',account:1,osType:0,clientReqId:'test'})};
 msg.compress = true;
 msg.body = zlib.deflateSync(msg.body);
 describe('libConnector', function(){

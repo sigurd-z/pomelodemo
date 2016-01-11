@@ -2,6 +2,9 @@
   "development":{
     "gate": [
     {"id": "gate-server-1", "host": "127.0.0.1", "port": 3150, "clientHost": "127.0.0.1", "clientPort": 3010, "frontend": true}
+    ],
+    "account": [
+    {"id": "account-server-1", "host": "127.0.0.1", "port": 3151}
     ]
   },
   "production":{

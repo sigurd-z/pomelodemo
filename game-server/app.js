@@ -38,6 +38,11 @@ app.configure('production|development',function(){
   app.filter(libZlibFilter());
   app.filter(accessLogFilter({slowTime:1000}));//record access log and execute time
 
+  //set route for multi server here
+  app.route('account', function(session, msg, app, cb) {
+    var routes = app.getServersByType(msg.serverType);
+    cb(null, routes[0].id);
+  });//shared by all group
 });
 
 // route gate configuration
@@ -55,6 +60,10 @@ app.configure('production|development', 'gate', function(){
       closeTimeout: 10*1000, //close after socket idle for 10 second, DO NOT set it under long connection, 5rpc+5self
       setNoDelay: true //by default TCP connections use the Nagle algorithm (~200ms), setNoDelay will turn it off
     });
+});
+
+// route account configuration
+app.configure('production|development', 'account', function(){
 });
 
 // start app

@@ -32,6 +32,12 @@ Handler.prototype.listRoute = function(msg, session, next){
     dict = myDic.getDict();
   }
   body = zlib.deflateSync(JSON.stringify(dict));
+
+  this.app.rpc.account.accountRemote.getPlayerInfo(session, msg.uuid, msg.account, 1, {d:'test'} , function(err, params){
+    console.log(111, err, params)
+  });
+
+
   next(null,{code:Code.OK, body:body, compress:true});
 };
 
