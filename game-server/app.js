@@ -10,6 +10,7 @@ var utils = require('./app/util/utils.js');
 var pomeloLogger = require('pomelo-logger');
 
 var accessLogFilter = require('./app/filter/accessLogFilter.js');
+var tooBusyFilter = require('./app/filter/toobusyFilter.js');
 var requestQueueFilter = require('./app/filter/requestQueueFilter.js');
 /**
  * Init app for client.
@@ -36,6 +37,8 @@ app.configure('production|development',function(){
   // 打开系统监控
   app.enable('systemMonitor');
 
+  //if server busy, return 503
+  app.before(tooBusyFilter(100));//40ms 60-70%cpu, 70ms 90-100% cpu
   // socket 数据解压
   app.filter(libZlibFilter());
   // app.filter(uuidFilter());//uuid used as sessionId
