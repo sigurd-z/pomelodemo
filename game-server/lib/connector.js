@@ -119,11 +119,8 @@ Connector.encode = Connector.prototype.encode = function(reqId, route, msg){//ms
       return null;
     }
   }
-  msg = libCoder.encode(this.aesKey, reqId, routeId, msg);
-  if(!msg){
-    logger.error('encode failed');
-    return null;
-  }
+  msg.routeId = routeId;
+  msg.aesKey = this.aesKey;
   return msg;
 };
 

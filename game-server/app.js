@@ -3,6 +3,7 @@ var pomelo = require('pomelo');
 // 自定义 socket (aes加密, zlib压缩)
 var libConnector= require('./lib/connector.js');
 var libZlibFilter = require('./lib/zlibfilter.js');
+var libScheduler = require('./lib/pushscheduler.js');
 var utils = require('./app/util/utils.js');
 
 // 日志扩展
@@ -38,6 +39,10 @@ app.configure('production|development',function(){
   app.filter(libZlibFilter());
   app.filter(accessLogFilter({slowTime:1000}));//record access log and execute time
 
+  // scheduler组件的具体调度策略配置, 有缓冲并且定时刷新的调度策略, 默认的是直接将响应发给客户端(仅仅被前端服务器加载)
+  app.set('pushSchedulerConfig', {
+    scheduler: libScheduler
+  });
   //set route for multi server here
   app.route('account', function(session, msg, app, cb) {
     var routes = app.getServersByType(msg.serverType);

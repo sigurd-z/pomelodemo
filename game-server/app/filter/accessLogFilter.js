@@ -30,19 +30,19 @@ Filter.prototype.before = function(msg, session, next){
       }
     }
   }
-  session.__accessId__ = this.curId+',ip:'+ip+',uuid:'+msg.uuid;
+  session.__accessId__ = this.curId+',ip: '+ip+',uuid: '+msg.uuid;
   logger.debug('accessId:%s,[request] %j',session.__accessId__, msg);
   next();
 };
 
 Filter.prototype.after = function(err, msg, session, response, next){
-  var execTime = Date.now() : session.__timestart__;
-  logger.debug('accessId:%s,execTime:%sms,response: %j',
+  var execTime = Date.now() - session.__timestart__;
+  logger.debug('accessId: %s,execTime: %sms,response: %j',
     session.__accessId__,
     execTime,
     response);
   if(this.slowLogger && execTime >= this.slowTime){
-    this.slowLogger.warn('accessId:%s,execTime:%sms,request: %j',
+    this.slowLogger.warn('accessId: %s,execTime: %sms,request: %j',
       session.__accessId__,
       execTime,
       msg);
