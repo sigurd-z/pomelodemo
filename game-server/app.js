@@ -10,6 +10,7 @@ var utils = require('./app/util/utils.js');
 var pomeloLogger = require('pomelo-logger');
 
 var accessLogFilter = require('./app/filter/accessLogFilter.js');
+var requestQueueFilter = require('./app/filter/requestQueueFilter.js');
 /**
  * Init app for client.
  */
@@ -37,6 +38,10 @@ app.configure('production|development',function(){
 
   // socket 数据解压
   app.filter(libZlibFilter());
+  // app.filter(uuidFilter());//uuid used as sessionId
+  // if request>=100 to queue
+  app.filter(requestQueueFilter(100));
+  // log request-response consume time
   app.filter(accessLogFilter({slowTime:1000}));//record access log and execute time
 
   // scheduler组件的具体调度策略配置, 有缓冲并且定时刷新的调度策略, 默认的是直接将响应发给客户端(仅仅被前端服务器加载)
